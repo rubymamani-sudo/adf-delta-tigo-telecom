@@ -1,0 +1,104 @@
+{
+	"name": "df_silver_llamadas",
+	"properties": {
+		"folder": {
+			"name": "SILVER"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_bronze_llamadas",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_sql_silver_llamadas",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "cast1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          descripcion as string,",
+				"          tipo as string,",
+				"          numero_origen as string,",
+				"          numero_destino as string,",
+				"          fecha as string,",
+				"          hora as string,",
+				"          duracion as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     batchSize: 0,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 select(mapColumn(",
+				"          tipo,",
+				"          numero_origen,",
+				"          numero_destino,",
+				"          fecha,",
+				"          hora,",
+				"          duracion",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"select1 derive(tipo = trim(tipo),",
+				"          numero_origen = trim(numero_origen),",
+				"          fecha = trim(fecha),",
+				"          numero_destino = trim(numero_destino),",
+				"          duracion = trim(duracion),",
+				"          hora = trim(hora)) ~> derivedColumn1",
+				"derivedColumn1 cast(output(",
+				"          fecha as date 'dd/MM/yyyy',",
+				"          hora as timestamp 'HH:mm:ss',",
+				"          duracion as integer",
+				"     ),",
+				"     errors: true) ~> cast1",
+				"cast1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          tipo as string,",
+				"          numero_origen as string,",
+				"          numero_destino as string,",
+				"          fecha as date,",
+				"          hora as timestamp,",
+				"          duracion as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          tipo,",
+				"          numero_origen,",
+				"          numero_destino,",
+				"          fecha,",
+				"          hora,",
+				"          duracion",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}
