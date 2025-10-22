@@ -1,0 +1,55 @@
+{
+	"name": "llamadas_tigo_csv",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sa_rw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "BRONZE"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "llamadas.csv",
+				"container": "raw-tigo"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "DESCRIPCION",
+				"type": "String"
+			},
+			{
+				"name": "TIPO",
+				"type": "String"
+			},
+			{
+				"name": "NUMERO_ORIGEN",
+				"type": "String"
+			},
+			{
+				"name": "NUMERO_DESTINO",
+				"type": "String"
+			},
+			{
+				"name": "FECHA",
+				"type": "String"
+			},
+			{
+				"name": "HORA",
+				"type": "String"
+			},
+			{
+				"name": "DURACION",
+				"type": "String"
+			}
+		]
+	}
+}

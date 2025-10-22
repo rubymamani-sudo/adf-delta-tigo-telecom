@@ -1,0 +1,37 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Script1",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "NonQuery",
+							"text": "CREATE SCHEMA BRONZE;\nCREATE SCHEMA SILVER\nCREATE SCHEMA GOLD;\n\nCREATE TABLE BRONZE.LLAMADAS (\n  [descripcion] varchar(100),\n  [tipo] varchar(25),\n  [numero_origen] varchar(25),\n  [numero_destino] varchar(25),\n  [fecha] varchar(25),\n  [hora] varchar(25),\n  [duracion] varchar(25)\n);\n\nCREATE TABLE SILVER.LLAMADAS_TIGO (\n  [tipo] varchar(1),\n  [numero_origen] varchar(25),\n  [numero_destino] varchar(25),\n  [fecha] date,\n  [hora] time,\n  [duracion] int,\n  \n)"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"folder": {
+			"name": "create schema"
+		},
+		"annotations": []
+	}
+}
