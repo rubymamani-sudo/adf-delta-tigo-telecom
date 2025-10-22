@@ -1,0 +1,40 @@
+{
+	"name": "ds_dim_hora",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sql_dw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id_hora",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "hora",
+				"type": "time",
+				"scale": 7
+			},
+			{
+				"name": "hora24",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "hora12",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "dim_hora"
+		}
+	}
+}

@@ -1,0 +1,47 @@
+{
+	"name": "ds_dim_fecha",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sql_dw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id_fecha",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fecha",
+				"type": "date"
+			},
+			{
+				"name": "año",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "mes",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "mes_texto",
+				"type": "nvarchar"
+			},
+			{
+				"name": "dia_texto",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "dim_fecha"
+		}
+	}
+}

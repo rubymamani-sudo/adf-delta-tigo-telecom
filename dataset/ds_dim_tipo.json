@@ -1,0 +1,29 @@
+{
+	"name": "ds_dim_tipo",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sql_dw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id_tipo",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "tipo",
+				"type": "char"
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "dim_tipo"
+		}
+	}
+}

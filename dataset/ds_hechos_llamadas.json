@@ -1,0 +1,55 @@
+{
+	"name": "ds_hechos_llamadas",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sql_dw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id_llamadas",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "duracion",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "id_tipo",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "id_origen",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "id_destino",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "id_fecha",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "id_hora",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "hechos_llamadas"
+		}
+	}
+}

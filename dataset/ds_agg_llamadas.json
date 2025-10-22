@@ -1,0 +1,51 @@
+{
+	"name": "ds_agg_llamadas",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sql_dw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id_agg",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "id_origen",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "num_llamadas",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "total_segundos",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "max_llamada",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "avg_llamada",
+				"type": "decimal",
+				"precision": 10,
+				"scale": 2
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "agg_llamadas"
+		}
+	}
+}

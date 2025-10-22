@@ -1,0 +1,29 @@
+{
+	"name": "ds_dim_destino",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sql_dw_tigo",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "GOLD"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id_destino",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "numero_destino",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "GOLD",
+			"table": "dim_destino"
+		}
+	}
+}
