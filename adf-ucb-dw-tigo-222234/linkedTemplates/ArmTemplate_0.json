@@ -1,0 +1,881 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-ucb-dw-tigo-222234"
+		},
+		"ls_sa_rw_tigo_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'ls_sa_rw_tigo'"
+		},
+		"ls_sql_dw_tigo_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_sql_dw_tigo'"
+		},
+		"ls_sql_dw_tigo_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sql-ucb-sisinfo-tigo-delta-234466.database.windows.net"
+		},
+		"ls_sql_dw_tigo_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "dw_tigo"
+		},
+		"ls_sql_dw_tigo_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "adminruby"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_sa_rw_tigo')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('ls_sa_rw_tigo_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_sql_dw_tigo')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('ls_sql_dw_tigo_properties_typeProperties_server')]",
+					"database": "[parameters('ls_sql_dw_tigo_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('ls_sql_dw_tigo_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_sql_dw_tigo_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Script1",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_sql_dw_tigo",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "NonQuery",
+									"text": "CREATE SCHEMA BRONZE;\nCREATE SCHEMA SILVER\nCREATE SCHEMA GOLD;\n\nCREATE TABLE BRONZE.LLAMADAS (\n  [descripcion] varchar(100),\n  [tipo] varchar(25),\n  [numero_origen] varchar(25),\n  [numero_destino] varchar(25),\n  [fecha] varchar(25),\n  [hora] varchar(25),\n  [duracion] varchar(25)\n);\n\nCREATE TABLE SILVER.LLAMADAS_TIGO (\n  [tipo] varchar(1),\n  [numero_origen] varchar(25),\n  [numero_destino] varchar(25),\n  [fecha] date,\n  [hora] time,\n  [duracion] int,\n  \n)"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "create schema"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_sql_bronze_llamadas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "BRONZE"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "descripcion",
+						"type": "varchar"
+					},
+					{
+						"name": "tipo",
+						"type": "varchar"
+					},
+					{
+						"name": "numero_origen",
+						"type": "varchar"
+					},
+					{
+						"name": "numero_destino",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha",
+						"type": "varchar"
+					},
+					{
+						"name": "hora",
+						"type": "varchar"
+					},
+					{
+						"name": "duracion",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "BRONZE",
+					"table": "LLAMADAS"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_sql_silver_llamadas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "SILVER"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "tipo",
+						"type": "varchar"
+					},
+					{
+						"name": "numero_origen",
+						"type": "varchar"
+					},
+					{
+						"name": "numero_destino",
+						"type": "varchar"
+					},
+					{
+						"name": "fecha",
+						"type": "date"
+					},
+					{
+						"name": "hora",
+						"type": "time",
+						"scale": 7
+					},
+					{
+						"name": "duracion",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "SILVER",
+					"table": "LLAMADAS_TIGO"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/llamadas_tigo_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sa_rw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "BRONZE"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "llamadas.csv",
+						"container": "raw-tigo"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "DESCRIPCION",
+						"type": "String"
+					},
+					{
+						"name": "TIPO",
+						"type": "String"
+					},
+					{
+						"name": "NUMERO_ORIGEN",
+						"type": "String"
+					},
+					{
+						"name": "NUMERO_DESTINO",
+						"type": "String"
+					},
+					{
+						"name": "FECHA",
+						"type": "String"
+					},
+					{
+						"name": "HORA",
+						"type": "String"
+					},
+					{
+						"name": "DURACION",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sa_rw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dim_tipo')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_tipo",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "tipo",
+						"type": "char"
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "dim_tipo"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dim_origen')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_origen",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "numero_origen",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "dim_origen"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dim_destino')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_destino",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "numero_destino",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "dim_destino"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dim_fecha')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_fecha",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "fecha",
+						"type": "date"
+					},
+					{
+						"name": "año",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "mes",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "mes_texto",
+						"type": "nvarchar"
+					},
+					{
+						"name": "dia_texto",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "dim_fecha"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_dim_hora')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_hora",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "hora",
+						"type": "time",
+						"scale": 7
+					},
+					{
+						"name": "hora24",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "hora12",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "dim_hora"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_hechos_llamadas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_llamadas",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "duracion",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "id_tipo",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "id_origen",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "id_destino",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "id_fecha",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "id_hora",
+						"type": "int",
+						"precision": 10
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "hechos_llamadas"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_agg_llamadas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sql_dw_tigo",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "GOLD"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id_agg",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "id_origen",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "num_llamadas",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "total_segundos",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "max_llamada",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "avg_llamada",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					}
+				],
+				"typeProperties": {
+					"schema": "GOLD",
+					"table": "agg_llamadas"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sql_dw_tigo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_bronze_cargar_llamadas')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "BRONZE"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "llamadas_tigo_csv",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_bronze_llamadas",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          DESCRIPCION as string,",
+						"          TIPO as string,",
+						"          NUMERO_ORIGEN as string,",
+						"          NUMERO_DESTINO as string,",
+						"          FECHA as string,",
+						"          HORA as string,",
+						"          DURACION as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          descripcion as string,",
+						"          tipo as string,",
+						"          numero_origen as string,",
+						"          numero_destino as string,",
+						"          fecha as string,",
+						"          hora as string,",
+						"          duracion as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          descripcion = DESCRIPCION,",
+						"          tipo = TIPO,",
+						"          numero_origen = NUMERO_ORIGEN,",
+						"          numero_destino = NUMERO_DESTINO,",
+						"          fecha = FECHA,",
+						"          hora = HORA,",
+						"          duracion = DURACION",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/llamadas_tigo_csv')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sql_bronze_llamadas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_silver_llamadas')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "SILVER"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_bronze_llamadas",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_sql_silver_llamadas",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select1"
+						},
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "cast1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          descripcion as string,",
+						"          tipo as string,",
+						"          numero_origen as string,",
+						"          numero_destino as string,",
+						"          fecha as string,",
+						"          hora as string,",
+						"          duracion as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     batchSize: 0,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> source1",
+						"source1 select(mapColumn(",
+						"          tipo,",
+						"          numero_origen,",
+						"          numero_destino,",
+						"          fecha,",
+						"          hora,",
+						"          duracion",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select1",
+						"select1 derive(tipo = trim(tipo),",
+						"          numero_origen = trim(numero_origen),",
+						"          fecha = trim(fecha),",
+						"          numero_destino = trim(numero_destino),",
+						"          duracion = trim(duracion),",
+						"          hora = trim(hora)) ~> derivedColumn1",
+						"derivedColumn1 cast(output(",
+						"          fecha as date 'dd/MM/yyyy',",
+						"          hora as timestamp 'HH:mm:ss',",
+						"          duracion as integer",
+						"     ),",
+						"     errors: true) ~> cast1",
+						"cast1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          tipo as string,",
+						"          numero_origen as string,",
+						"          numero_destino as string,",
+						"          fecha as date,",
+						"          hora as timestamp,",
+						"          duracion as integer",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          tipo,",
+						"          numero_origen,",
+						"          numero_destino,",
+						"          fecha,",
+						"          hora,",
+						"          duracion",
+						"     )) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sql_bronze_llamadas')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sql_silver_llamadas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline_bronze')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_bronze_cargar_llamadas",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "BRONZE"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_bronze_cargar_llamadas')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline_silver')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_silver_llamadas",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "SILVER"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_silver_llamadas')]"
+			]
+		}
+	]
+}
